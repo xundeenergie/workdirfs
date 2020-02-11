@@ -9,3 +9,15 @@ It also contains a systemd-unit for users systemd-process, which will start on l
 Run setup.sh, to install it for one user.
 
 Run setup-system.sh to install it for all users
+
+## System Requriements
+
+### Debian based systems
+```
+    sudo apt install python3-fuse python3-fusepy
+```
+
+### Redhat based systems
+```
+    sudo dnf install python3-fusepy
+```
