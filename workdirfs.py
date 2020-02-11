@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env -S  python3 -u
 
 from __future__ import with_statement
 
@@ -6,12 +6,23 @@ import os
 import sys
 import errno
 
-from fuse import FUSE, FuseOSError, Operations
+from datetime import datetime, timedelta
+import time
+
+try:
+    from fuse import FUSE, FuseOSError, Operations
+except:
+    try:
+        from fusepy import FUSE, FuseOSError, Operations
+    except:
+        print("please install fusepy")
+        raise errno.ENOENT
 
 
 class Passthrough(Operations):
     def __init__(self, root):
         self.root = root
+        self.timeoffset = 2 #hours
 
     # Helpers
     # =======
@@ -19,7 +30,12 @@ class Passthrough(Operations):
     def _full_path(self, partial):
         if partial.startswith("/"):
             partial = partial[1:]
-        path = os.path.join(self.root, partial)
+        today = datetime.now() - timedelta(hours=self.timeoffset)
+        path = os.path.join(check_dir(os.path.join(self.root,
+                                                   "workdir",
+                                                   today.strftime("%Y-%m-%d"))),
+                            partial)
+
         return path
 
     # Filesystem methods
@@ -41,8 +57,14 @@ class Passthrough(Operations):
     def getattr(self, path, fh=None):
         full_path = self._full_path(path)
         st = os.lstat(full_path)
-        return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
-                     'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
+        return dict((key, getattr(st, key)) for key in ('st_atime',
+                                                        'st_ctime',
+                                                        'st_gid',
+                                                        'st_mode',
+                                                        'st_mtime',
+                                                        'st_nlink',
+                                                        'st_size',
+                                                        'st_uid'))
 
     def readdir(self, path, fh):
         full_path = self._full_path(path)
@@ -74,9 +96,16 @@ class Passthrough(Operations):
     def statfs(self, path):
         full_path = self._full_path(path)
         stv = os.statvfs(full_path)
-        return dict((key, getattr(stv, key)) for key in ('f_bavail', 'f_bfree',
-            'f_blocks', 'f_bsize', 'f_favail', 'f_ffree', 'f_files', 'f_flag',
-            'f_frsize', 'f_namemax'))
+        return dict((key, getattr(stv, key)) for key in ('f_bavail',
+                                                         'f_bfree',
+                                                         'f_blocks',
+                                                         'f_bsize',
+                                                         'f_favail',
+                                                         'f_ffree',
+                                                         'f_files',
+                                                         'f_flag',
+                                                         'f_frsize',
+                                                         'f_namemax'))
 
     def unlink(self, path):
         return os.unlink(self._full_path(path))
@@ -126,9 +155,45 @@ class Passthrough(Operations):
     def fsync(self, path, fdatasync, fh):
         return self.flush(path, fh)
 
+def cleanup_dirs(root):
+    for d in os.listdir(root):
+        if not os.listdir(os.path.join(root, d)):
+            print("Directory is empty -> remove it",
+                  os.listdir(os.path.join(root, d)))
 
-def main(mountpoint, root):
+
+def check_dir(path, cleanup=False):
+    checkdir = os.path.isdir(path)
+    if not checkdir:
+        try:
+            os.makedirs(path, exist_ok=True)
+            print("Created directory %s", (path), flush=True)
+            if cleanup:
+                cleanup_dirs(path)
+        except:
+            print("[-] Makedir error")
+    return path
+
+def main(root, mountpoint):
+    #FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    check_dir(mountpoint)
     FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
 
 if __name__ == '__main__':
-    main(sys.argv[2], sys.argv[1])
+    #main(sys.argv[2], sys.argv[1])
+    root = os.environ['HOME']+'/archive'
+    mountpoint = os.environ['HOME']+'/WorkNew'
+    print(len(sys.argv))
+    print(sys.argv)
+    if len(sys.argv) == 1:
+        print("use default locations")
+    elif len(sys.argv) == 2:
+        mountpoint = sys.argv[1]
+    elif len(sys.argv) == 3:
+        mountpoint = sys.argv[2]
+        root = sys.argv[1]
+    else:
+        print("not correct count of arguments")
+        raise
+    print(root, mountpoint)
+    main(root, mountpoint)
