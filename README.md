@@ -24,6 +24,7 @@ python3 is requried and also this packages:
 ## Installation
 
 Run setup.sh, to install it for all user.
+This script will do the next steps for you. Reload users systemd and start service
 And then reload users systemd
 ```
     systemctl --user daemon-reload
