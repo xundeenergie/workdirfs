@@ -199,18 +199,18 @@ def main(root, mountpoint):
             inplace=True) as fh:
         for line in fh:
             if line.startswith('XDG_ARCHIVE_DIR'):
-                print("XDG_ARCHIVE_DIR=\""+root+'"')
+                print("XDG_ARCHIVE_DIR=\""+root+'"\n')
                 foundarchive=True
             elif line.startswith('XDG_WORK_DIR'):
-                print("XDG_WORK_DIR=\""+mountpoint+'"')
+                print("XDG_WORK_DIR=\""+mountpoint+'"\n')
                 foundwork=True
             else:
                  print(line, end='')
     if not foundarchive:
-        with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
+        with open(os.environ['HOME']+'/.config/user-dirs.dirs\n', 'a') as fh:
             fh.write("XDG_ARCHIVE_DIR=\""+root+'"')
     if not foundwork:
-        with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
+        with open(os.environ['HOME']+'/.config/user-dirs.dirs\n', 'a') as fh:
             fh.write("XDG_WORK_DIR=\""+mountpoint+'"')
 
     FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
