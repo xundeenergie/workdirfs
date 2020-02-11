@@ -3,5 +3,5 @@ Description=Daily working directory ~/Work
 
 [Service]
 Environment=SRC=%h/archive DST=%h/Work
-ExecStart=/usr/bin/python3 /usr/local/bin/workdirfs.py ${SRC} ${DST}
+ExecStart=/usr/bin/python3 -u /usr/local/bin/workdirfs.py ${SRC} ${DST}
 ExecStop=/usr/bin/fusermount -u ${DST}
