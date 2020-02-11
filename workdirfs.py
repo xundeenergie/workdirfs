@@ -207,11 +207,11 @@ def main(root, mountpoint):
             else:
                  print(line, end='')
     if not foundarchive:
-        with open(os.environ['HOME']+'/.config/user-dirs.dirs\n', 'a') as fh:
-            fh.write("XDG_ARCHIVE_DIR=\""+root+'"')
+        with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
+            fh.write("XDG_ARCHIVE_DIR=\""+root+'"\n')
     if not foundwork:
-        with open(os.environ['HOME']+'/.config/user-dirs.dirs\n', 'a') as fh:
-            fh.write("XDG_WORK_DIR=\""+mountpoint+'"')
+        with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
+            fh.write("XDG_WORK_DIR=\""+mountpoint+'"\n')
 
     FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
 
