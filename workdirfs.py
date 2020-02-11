@@ -9,6 +9,8 @@ import errno
 from datetime import datetime, timedelta
 import time
 
+import fileinput
+
 try:
     from fuse import FUSE, FuseOSError, Operations
 except:
@@ -23,18 +25,25 @@ class Passthrough(Operations):
     def __init__(self, root):
         self.root = root
         self.timeoffset = 2 #hours
+        self.yearlydir = True
+        self.monthlydir = True
 
     # Helpers
     # =======
 
     def _full_path(self, partial):
+        today = datetime.now() - timedelta(hours=self.timeoffset)
+        if self.yearlydir:
+            path = os.path.join(self.root,"workdir",today.strftime("%Y"))
+            if self.monthlydir:
+                path = os.path.join(path, today.strftime("%m"))
+        else:
+            path = os.path.join(self.root, "workdir")
+
         if partial.startswith("/"):
             partial = partial[1:]
-        today = datetime.now() - timedelta(hours=self.timeoffset)
-        path = os.path.join(check_dir(os.path.join(self.root,
-                                                   "workdir",
-                                                   today.strftime("%Y-%m-%d"))),
-                            partial)
+
+        path = os.path.join(check_dir(os.path.join(path, today.strftime("%Y-%m-%d"))), partial)
 
         return path
 
@@ -156,36 +165,53 @@ class Passthrough(Operations):
         return self.flush(path, fh)
 
 def cleanup_dirs(root):
-    for d in os.listdir(root):
-        if not os.listdir(os.path.join(root, d)):
-            print("Directory is empty -> remove it",
-                  os.listdir(os.path.join(root, d)))
+    today = datetime.now() - timedelta(hours=2)
+    today = today.strftime("%Y-%m-%d")
+
+    for root, dirs, files in os.walk(root, topdown=False):
+        for _dir in dirs:
+            print("cleanup",os.path.join(root, _dir))
+            if not _dir == today and not os.listdir(os.path.join(root, _dir)):
+                print("Directory is empty -> remove it",
+                      os.path.join(root, _dir))
 
 
-def check_dir(path, cleanup=False):
+def check_dir(path):
     checkdir = os.path.isdir(path)
     if not checkdir:
         try:
             os.makedirs(path, exist_ok=True)
-            print("Created directory %s", (path), flush=True)
-            if cleanup:
-                cleanup_dirs(path)
+            print("Created directory {}".format(path), flush=True)
         except:
             print("[-] Makedir error")
     return path
 
 def main(root, mountpoint):
     #FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    check_dir(root)
     check_dir(mountpoint)
-    with fileinput.input(os.environ['HOME']+'/.config/user-dirs.dirs.test',
+    cleanup_dirs(root)
+    # first search if configuration exists for xdg-userdirs
+    # to use it with alias gowork and goarchive
+    foundarchive=False
+    foundwork=False
+    with fileinput.input(os.environ['HOME']+'/.config/user-dirs.dirs',
             inplace=True) as fh:
         for line in fh:
-            if line.startswith('XDG_WORK_DIR'):
-                print("XDG_WORK_DIR=$HOME/"+mountpoint, end='')
-                break
-        else:
-            print("XDG_WORK_DIR=$HOME/"+mountpoint, end='')
-
+            if line.startswith('XDG_ARCHIVE_DIR'):
+                print("XDG_ARCHIVE_DIR=\""+root+'"')
+                foundarchive=True
+            elif line.startswith('XDG_WORK_DIR'):
+                print("XDG_WORK_DIR=\""+mountpoint+'"')
+                foundwork=True
+            else:
+                 print(line, end='')
+    if not foundarchive:
+        with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
+            fh.write("XDG_ARCHIVE_DIR=\""+root+'"')
+    if not foundwork:
+        with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
+            fh.write("XDG_WORK_DIR=\""+mountpoint+'"')
 
     FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
 
