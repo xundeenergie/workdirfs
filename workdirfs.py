@@ -177,12 +177,22 @@ def check_dir(path, cleanup=False):
 def main(root, mountpoint):
     #FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
     check_dir(mountpoint)
+    with fileinput.input(os.environ['HOME']+'/.config/user-dirs.dirs.test',
+            inplace=True) as fh:
+        for line in fh:
+            if line.startswith('XDG_WORK_DIR'):
+                print("XDG_WORK_DIR=$HOME/"+mountpoint, end='')
+                break
+        else:
+            print("XDG_WORK_DIR=$HOME/"+mountpoint, end='')
+
+
     FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
 
 if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
     root = os.environ['HOME']+'/archive'
-    mountpoint = os.environ['HOME']+'/WorkNew'
+    mountpoint = os.environ['HOME']+'/Work'
     print(len(sys.argv))
     print(sys.argv)
     if len(sys.argv) == 1:
