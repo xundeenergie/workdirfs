@@ -199,23 +199,26 @@ def main(args):
     # to use it with alias gowork and goarchive
     foundarchive=False
     foundwork=False
-    with fileinput.input(os.environ['HOME']+'/.config/user-dirs.dirs',
-            inplace=True) as fh:
-        for line in fh:
-            if line.startswith('XDG_ARCHIVE_DIR'):
-                print("XDG_ARCHIVE_DIR=\"${HOME}/"+args.archive+'"', end='\n')
-                foundarchive=True
-            elif line.startswith('XDG_WORK_DIR'):
-                print("XDG_WORK_DIR=\"${HOME}/"+args.mountpoint+'"', end='\n')
-                foundwork=True
-            else:
-                 print(line, end='')
+    try:
+        with fileinput.input(os.environ['HOME']+'/.config/user-dirs.dirs',
+                inplace=True) as fh:
+            for line in fh:
+                if line.startswith('XDG_ARCHIVE_DIR'):
+                    print("XDG_ARCHIVE_DIR=\"$HOME/"+args.archive+'"', end='\n')
+                    foundarchive=True
+                elif line.startswith('XDG_WORK_DIR'):
+                    print("XDG_WORK_DIR=\"$HOME/"+args.mountpoint+'"', end='\n')
+                    foundwork=True
+                else:
+                     print(line, end='')
+    except:
+        print("File not existing, create it: {}".format(os.environ['HOME']+'/.config/user-dirs.dirs'))
     if not foundarchive:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_ARCHIVE_DIR=\"${HOME}/"+args.archive+'"\n')
+            fh.write("XDG_ARCHIVE_DIR=\"$HOME/"+args.archive+'"\n')
     if not foundwork:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_WORK_DIR=\"${HOME}/"+args.mountpoint+'"\n')
+            fh.write("XDG_WORK_DIR=\"$HOME/"+args.mountpoint+'"\n')
 
     # start FUSE filesystem
     FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint), nothreads=True, foreground=True)
