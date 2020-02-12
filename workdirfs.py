@@ -48,8 +48,6 @@ class WorkdirFS(Operations):
 
         return path
 
-    def _full_content_path(self, partial):
-
     # Filesystem methods
     # ==================
 
