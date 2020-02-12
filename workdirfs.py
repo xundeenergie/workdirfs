@@ -26,25 +26,29 @@ except:
 class WorkdirFS(Operations):
     def __init__(self, args):
         self.args = args
+        self.today = datetime.now() - timedelta(hours=self.args.timeoffset)
 
     # Helpers
     # =======
 
     def _full_path(self, partial):
-        today = datetime.now() - timedelta(hours=self.args.timeoffset)
+        self.today = datetime.now() - timedelta(hours=self.args.timeoffset)
         if self.args.yearlydir:
-            path = os.path.join(os.environ['HOME'], self.args.archive,"workdir",today.strftime("%Y"))
+            path = os.path.join(os.environ['HOME'],
+                    self.args.archive,"workdir",self.today.strftime("%Y"))
             if self.args.monthlydir:
-                path = os.path.join(path, today.strftime("%m"))
+                path = os.path.join(path, self.today.strftime("%m"))
         else:
             path = os.path.join(os.environ['HOME'], self.args.archive, "workdir")
 
         if partial.startswith("/"):
             partial = partial[1:]
 
-        path = os.path.join(check_dir(os.path.join(path, today.strftime("%Y-%m-%d"))), partial)
+        path = os.path.join(check_dir(os.path.join(path, self.today.strftime("%Y-%m-%d"))), partial)
 
         return path
+
+    def _full_content_path(self, partial):
 
     # Filesystem methods
     # ==================
