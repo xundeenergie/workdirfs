@@ -11,6 +11,8 @@ import time
 
 import fileinput
 
+import argparse
+
 try:
     from fuse import FUSE, FuseOSError, Operations
 except:
@@ -22,23 +24,20 @@ except:
 
 
 class WorkdirFS(Operations):
-    def __init__(self, root):
-        self.root = root
-        self.timeoffset = 2 #hours
-        self.yearlydir = True
-        self.monthlydir = True
+    def __init__(self, args):
+        self.args = args
 
     # Helpers
     # =======
 
     def _full_path(self, partial):
-        today = datetime.now() - timedelta(hours=self.timeoffset)
-        if self.yearlydir:
-            path = os.path.join(self.root,"workdir",today.strftime("%Y"))
-            if self.monthlydir:
+        today = datetime.now() - timedelta(hours=self.args.timeoffset)
+        if self.args.yearlydir:
+            path = os.path.join(self.args.archive,"workdir",today.strftime("%Y"))
+            if self.args.monthlydir:
                 path = os.path.join(path, today.strftime("%m"))
         else:
-            path = os.path.join(self.root, "workdir")
+            path = os.path.join(self.args.archive, "workdir")
 
         if partial.startswith("/"):
             partial = partial[1:]
@@ -88,7 +87,7 @@ class WorkdirFS(Operations):
         pathname = os.readlink(self._full_path(path))
         if pathname.startswith("/"):
             # Path name is absolute, sanitize it.
-            return os.path.relpath(pathname, self.root)
+            return os.path.relpath(pathname, self.args.archive)
         else:
             return pathname
 
@@ -165,6 +164,7 @@ class WorkdirFS(Operations):
         return self.flush(path, fh)
 
 def cleanup_dirs(root):
+
     today = datetime.now() - timedelta(hours=2)
     today = today.strftime("%Y-%m-%d")
 
@@ -172,7 +172,8 @@ def cleanup_dirs(root):
         for _dir in dirs:
             print("cleanup",os.path.join(root, _dir))
             if not _dir == today and not os.listdir(os.path.join(root, _dir)):
-                print("Directory is empty -> remove it",
+                print("Directory is empty -> remove it (not now implemented for
+                        testpurpose)",
                       os.path.join(root, _dir))
 
 
@@ -186,11 +187,11 @@ def check_dir(path):
             print("[-] Makedir error")
     return path
 
-def main(root, mountpoint):
+def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
-    check_dir(root)
-    check_dir(mountpoint)
-    cleanup_dirs(root)
+    check_dir(args.archive)
+    check_dir(args.mountpoint)
+    cleanup_dirs(args.archive)
     # first search if configuration exists for xdg-userdirs
     # to use it with alias gowork and goarchive
     foundarchive=False
@@ -199,37 +200,38 @@ def main(root, mountpoint):
             inplace=True) as fh:
         for line in fh:
             if line.startswith('XDG_ARCHIVE_DIR'):
-                print("XDG_ARCHIVE_DIR=\""+root+'"\n')
+                print("XDG_ARCHIVE_DIR=\""+args.archive+'"\n')
                 foundarchive=True
             elif line.startswith('XDG_WORK_DIR'):
-                print("XDG_WORK_DIR=\""+mountpoint+'"\n')
+                print("XDG_WORK_DIR=\""+args.mountpoint+'"\n')
                 foundwork=True
             else:
                  print(line, end='')
     if not foundarchive:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_ARCHIVE_DIR=\""+root+'"\n')
+            fh.write("XDG_ARCHIVE_DIR=\""+args.archive+'"\n')
     if not foundwork:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_WORK_DIR=\""+mountpoint+'"\n')
+            fh.write("XDG_WORK_DIR=\""+args.mountpoint+'"\n')
 
-    FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
+    # start FUSE filesystem
+    FUSE(WorkdirFS(args), args.mountpoint, nothreads=True, foreground=True)
 
 if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
-    root = os.environ['HOME']+'/archive'
-    mountpoint = os.environ['HOME']+'/Work'
-    print(len(sys.argv))
-    print(sys.argv)
-    if len(sys.argv) == 1:
-        print("use default locations")
-    elif len(sys.argv) == 2:
-        mountpoint = sys.argv[1]
-    elif len(sys.argv) == 3:
-        mountpoint = sys.argv[2]
-        root = sys.argv[1]
-    else:
-        print("not correct count of arguments")
-        raise
-    print(root, mountpoint)
-    main(root, mountpoint)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--archive",
+            default=os.environ['HOME']+'/archive', help="Path to archivedir-base")
+    parser.add_argument("-m", "--mountpoint",
+            default=os.environ['HOME']+'/Work', help='Path to Workdir')
+    parser.add_argument("-t", "--timeoffset", type=int, default=2, help="""If you're working
+            all day till 3 o'clock in the morning, set it to 4, so next day
+            archive-dir will be created 4 hours after midnight. You have 1h
+            tolerance, if you're working one day a little bit longer""")
+    parser.add_argument("-y", "--yearlydir", action="store_false")
+    parser.add_argument("-M", "--monthlydir", action="store_false")
+    args = parser.parse_args()
+    print(args)
+    #root = os.environ['HOME']+'/archive'
+    #mountpoint = os.environ['HOME']+'/Work'
+    main(args)
