@@ -228,8 +228,8 @@ if __name__ == '__main__':
             all day till 3 o'clock in the morning, set it to 4, so next day
             archive-dir will be created 4 hours after midnight. You have 1h
             tolerance, if you're working one day a little bit longer""")
-    parser.add_argument("-y", "--yearlydir", action="store_true")
-    parser.add_argument("-M", "--monthlydir", action="store_true")
+    parser.add_argument("-y", "--yearlydir", default=False)
+    parser.add_argument("-M", "--monthlydir", default=False)
     args = parser.parse_args()
     print(args)
     #root = os.environ['HOME']+'/archive'
