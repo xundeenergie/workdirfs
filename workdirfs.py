@@ -21,7 +21,7 @@ except:
         raise errno.ENOENT
 
 
-class Passthrough(Operations):
+class WorkdirFS(Operations):
     def __init__(self, root):
         self.root = root
         self.timeoffset = 2 #hours
@@ -187,7 +187,7 @@ def check_dir(path):
     return path
 
 def main(root, mountpoint):
-    #FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
     check_dir(root)
     check_dir(mountpoint)
     cleanup_dirs(root)
@@ -213,7 +213,7 @@ def main(root, mountpoint):
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
             fh.write("XDG_WORK_DIR=\""+mountpoint+'"\n')
 
-    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
 
 if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
