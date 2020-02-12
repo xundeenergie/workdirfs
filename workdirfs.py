@@ -20,7 +20,7 @@ except:
         from fusepy import FUSE, FuseOSError, Operations
     except:
         print("please install fusepy")
-        raise errno.ENOENT
+        raise errno.ModuleNotFoundError
 
 
 class WorkdirFS(Operations):
