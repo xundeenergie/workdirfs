@@ -32,7 +32,6 @@ class WorkdirFS(Operations):
 
     def _full_path(self, partial):
         today = datetime.now() - timedelta(hours=self.args.timeoffset)
-        print("-y ", self.args.yearlydir, " -M ", self.args.monthlydir)
         if self.args.yearlydir:
             path = os.path.join(os.environ['HOME'], self.args.archive,"workdir",today.strftime("%Y"))
             if self.args.monthlydir:
