@@ -31,4 +31,11 @@ And then reload users systemd
     systemctl --user restart workdirfs.service
 ```
 
+### Alias
+If you want, add an alias in your configuration (e.g. ~/.bashrc /etc/bash.bashrc /etc/profile.d/aliases... whatever you want) to go quick to archive or ~/Work.
 
+```
+    alias gowork='[ -e $(xdg-user-dir WORK) ] && cd $(xdg-user-dir WORK)'
+    alias goarchive='[ -e $(xdg-user-dir ARCHIVE) ] && cd $(xdg-user-dir ARCHIVE)'
+```
+On every restart of users systemd, the xdg-configuration for xdg-user-dir WORK and ARCHIVE is being updated, so the alias should work always. Even if you change the path to XDG\_WORK\_DIR or XDG\_ARCHIVE\_DIR in systemd unit.
