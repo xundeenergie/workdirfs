@@ -2,6 +2,7 @@
 Description=Daily working directory ~/Work
 
 [Service]
-Environment=WORKDIRFS_OPTIONS="-a %h/archive -m %h/Work -t 3 -M False -y False"
-ExecStart=/usr/bin/python3 -u /usr/local/bin/workdirfs.py ${WORKDIRFS_OPTIONS}
-ExecStop=/usr/bin/fusermount -u ${DST}
+EnvironmentFile=/etc/workdirfs.conf
+EnvironmentFile=-%h/.config/workdirfs.conf
+ExecStart=/usr/bin/python3 -u /usr/local/bin/workdirfs.py --archive ${ARCHIVE} --mountpoint ${MOUNTPOINT} --timeoffset ${TIMEOFFSET} --yearlydir ${YEARLYDIR} --monthlydir ${MONTHLYDIR}
+ExecStop=/usr/bin/fusermount -u ${MOUNTPOINT}
