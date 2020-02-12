@@ -172,8 +172,8 @@ def cleanup_dirs(root):
         for _dir in dirs:
             print("cleanup",os.path.join(root, _dir))
             if not _dir == today and not os.listdir(os.path.join(root, _dir)):
-                print("Directory is empty -> remove it (not now implemented for
-                        testpurpose)",
+                print("""Directory is empty -> remove it (not now implemented for
+                        testpurpose)""",
                       os.path.join(root, _dir))
 
 
