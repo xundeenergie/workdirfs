@@ -203,10 +203,10 @@ def main(args):
             inplace=True) as fh:
         for line in fh:
             if line.startswith('XDG_ARCHIVE_DIR'):
-                print("XDG_ARCHIVE_DIR=\"${HOME}/"+args.archive+'"\n')
+                print("XDG_ARCHIVE_DIR=\"${HOME}/"+args.archive+'"', end='\n')
                 foundarchive=True
             elif line.startswith('XDG_WORK_DIR'):
-                print("XDG_WORK_DIR=\"${HOME}/"+args.mountpoint+'"\n')
+                print("XDG_WORK_DIR=\"${HOME}/"+args.mountpoint+'"', end='\n')
                 foundwork=True
             else:
                  print(line, end='')
