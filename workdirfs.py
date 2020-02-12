@@ -33,11 +33,11 @@ class WorkdirFS(Operations):
     def _full_path(self, partial):
         today = datetime.now() - timedelta(hours=self.args.timeoffset)
         if self.args.yearlydir:
-            path = os.path.join(self.args.archive,"workdir",today.strftime("%Y"))
+            path = os.path.join(os.environ['HOME'], self.args.archive,"workdir",today.strftime("%Y"))
             if self.args.monthlydir:
                 path = os.path.join(path, today.strftime("%m"))
         else:
-            path = os.path.join(self.args.archive, "workdir")
+            path = os.path.join(os.environ['HOME'], self.args.archive, "workdir")
 
         if partial.startswith("/"):
             partial = partial[1:]
@@ -87,7 +87,8 @@ class WorkdirFS(Operations):
         pathname = os.readlink(self._full_path(path))
         if pathname.startswith("/"):
             # Path name is absolute, sanitize it.
-            return os.path.relpath(pathname, self.args.archive)
+            return os.path.relpath(pathname, os.path.join(os.environ['HOME'],
+                self.args.archive))
         else:
             return pathname
 
@@ -189,9 +190,9 @@ def check_dir(path):
 
 def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
-    check_dir(args.archive)
-    check_dir(args.mountpoint)
-    cleanup_dirs(args.archive)
+    check_dir(os.path.join(os.environ['HOME'], args.archive))
+    check_dir(os.path.join(os.environ['HOME'], args.mountpoint))
+    cleanup_dirs(os.path.join(os.environ['HOME'], args.archive))
     # first search if configuration exists for xdg-userdirs
     # to use it with alias gowork and goarchive
     foundarchive=False
@@ -200,30 +201,30 @@ def main(args):
             inplace=True) as fh:
         for line in fh:
             if line.startswith('XDG_ARCHIVE_DIR'):
-                print("XDG_ARCHIVE_DIR=\""+args.archive+'"\n')
+                print("XDG_ARCHIVE_DIR=\"${HOME}/"+args.archive+'"\n')
                 foundarchive=True
             elif line.startswith('XDG_WORK_DIR'):
-                print("XDG_WORK_DIR=\""+args.mountpoint+'"\n')
+                print("XDG_WORK_DIR=\"${HOME}/"+args.mountpoint+'"\n')
                 foundwork=True
             else:
                  print(line, end='')
     if not foundarchive:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_ARCHIVE_DIR=\""+args.archive+'"\n')
+            fh.write("XDG_ARCHIVE_DIR=\"${HOME}/"+args.archive+'"\n')
     if not foundwork:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_WORK_DIR=\""+args.mountpoint+'"\n')
+            fh.write("XDG_WORK_DIR=\"${HOME}/"+args.mountpoint+'"\n')
 
     # start FUSE filesystem
-    FUSE(WorkdirFS(args), args.mountpoint, nothreads=True, foreground=True)
+    FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint), nothreads=True, foreground=True)
 
 if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--archive",
-            default=os.environ['HOME']+'/archive', help="Path to archivedir-base")
+            default='archive', help="Path to archivedir-base")
     parser.add_argument("-m", "--mountpoint",
-            default=os.environ['HOME']+'/Work', help='Path to Workdir')
+            default='Work', help='Path to Workdir')
     parser.add_argument("-t", "--timeoffset", type=int, default=2, help="""If you're working
             all day till 3 o'clock in the morning, set it to 4, so next day
             archive-dir will be created 4 hours after midnight. You have 1h
