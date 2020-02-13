@@ -12,6 +12,7 @@ import time
 import fileinput
 
 import argparse
+import zipfile
 
 try:
     from fuse import FUSE, FuseOSError, Operations
@@ -27,6 +28,7 @@ class WorkdirFS(Operations):
     def __init__(self, args):
         self.args = args
         self.today = datetime.now() - timedelta(hours=self.args.timeoffset)
+        self.yesterday = datetime.now() - timedelta(hours=self.args.timeoffset)
 
     # Helpers
     # =======
@@ -44,7 +46,15 @@ class WorkdirFS(Operations):
         if partial.startswith("/"):
             partial = partial[1:]
 
-        path = os.path.join(check_dir(os.path.join(path, self.today.strftime("%Y-%m-%d"))), partial)
+        path = os.path.join(check_dir(
+            os.path.join(path, self.today.strftime("%Y-%m-%d")),
+            os.path.join(path, self.yesterday.strftime("%Y-%m-%d"))
+            ),
+            partial
+            )
+
+        if self.today > self.yesterday:
+            self.yesterday = self.today
 
         return path
 
@@ -180,15 +190,36 @@ def cleanup_dirs(root):
                       os.path.join(root, _dir))
 
 
-def check_dir(path):
+def check_dir(path, yesterpath=None):
     checkdir = os.path.isdir(path)
     if not checkdir:
         try:
             os.makedirs(path, exist_ok=True)
             print("Created directory {}".format(path), flush=True)
+            if yesterpath != None and path != yesterpath:
+                _zipfiles(yesterpath)
+
         except:
             print("[-] Makedir error")
     return path
+
+def _zipfiles(path)
+    print("Zip files in yesterdays archivdir {}".format(path))
+    files = []
+    # r=root, d=directories, f = files
+    for r, d, f in os.walk(path):
+        for file in f:
+            if '.gz' not in file:
+                files.append(os.path.join(r, file))
+
+    for f in files:
+        print("file to zip: {}".format(f))
+        with Zipfile(f+'.gz', allowZip64=True, 'w') as zf:
+            zf.write(f)
+
+
+
+
 
 def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
