@@ -1,5 +1,8 @@
 #!/bin/sh
 
+. ./uninstall.sh
+
+echo "Install workdirfs for all users"
 sudo cp workdirfs.py /usr/local/bin/workdirfs.py
 sudo cp workdirfs.service /etc/systemd/user/workdirfs.service
 sudo mkdir -pv /etc/systemd/user/default.target.wants/

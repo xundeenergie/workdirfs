@@ -1,5 +1,8 @@
 #!/bin/sh
 
+. uninstall.sh
+
+echo "Install workdirfs for users ${USER}"
 sudo cp workdirfs.py /usr/local/bin/workdirfs.py
 cp workdirfs.service ~/.config/systemd/user/workdirfs.service
 mkdir -pv ~/.config/systemd/user/default.target.wants/
