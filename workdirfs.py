@@ -205,6 +205,9 @@ def check_dir(path, yesterpath=None):
 
 def _zipfiles(path)
     print("Zip files in yesterdays archivdir {}".format(path))
+    zip_fileext=".zip"
+    zip_compression=zipfile.ZIP_DEFLATED
+    zip_compressionlevel=5
     files = []
     # r=root, d=directories, f = files
     for r, d, f in os.walk(path):
@@ -213,9 +216,20 @@ def _zipfiles(path)
                 files.append(os.path.join(r, file))
 
     for f in files:
-        print("file to zip: {}".format(f))
-        with Zipfile(f+'.gz', allowZip64=True, 'w') as zf:
-            zf.write(f)
+        print("file to zip: {} -> {}".format(os.path.basename(f), f+'.bzip'))
+        try:
+            with ZipFile(
+                    f+zip_fileext,
+                    'w',
+                    allowZip64=True,
+                    compression=zip_compression,
+                    compresslevel=zip_compressionlevel
+                    ) as zf:
+                zf.write(f, os.path.basename(f))
+        except Exception as e:
+            print("Error during zipping file {}".format(f), e)
+        else:
+            os.remove(f)
 
 
 
