@@ -203,7 +203,7 @@ def check_dir(path, yesterpath=None):
             print("[-] Makedir error")
     return path
 
-def _zipfiles(path)
+def _zipfiles(path):
     print("Zip files in yesterdays archivdir {}".format(path))
     zip_fileext=".zip"
     zip_compression=zipfile.ZIP_DEFLATED
