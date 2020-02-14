@@ -12,7 +12,8 @@ import time
 import fileinput
 
 import argparse
-import zipfile
+import gzip
+import shutil
 
 try:
     from fuse import FUSE, FuseOSError, Operations
@@ -29,6 +30,18 @@ class WorkdirFS(Operations):
         self.args = args
         self.today = datetime.now() - timedelta(hours=self.args.timeoffset)
         self.yesterday = datetime.now() - timedelta(hours=self.args.timeoffset)
+        self.confdir = os.path.join(os.environ['HOME'], '.local', 'workdirfs')
+
+        if os.path.exists(os.path.join(self.confdir, 'yesterpath')):
+            with open(os.path.join(self.confdir, 'yesterpath'), 'r') as fh:
+                self.yesterpath = fh.readline().strip()
+        else:
+            self.yesterpath = os.path.join(self.args.archive, 'workdir', self.yesterday.strftime("%Y-%m-%d"))
+            if not os.path.isdir(self.confdir):
+                os.mkdir(self.confdir)
+            with open(os.path.join(self.confdir, 'yesterpath'), 'w') as fh:
+                fh.write(self.yesterpath)
+        print("initial yesterpath is {}".format(self.yesterpath))
 
     # Helpers
     # =======
@@ -46,10 +59,12 @@ class WorkdirFS(Operations):
         if partial.startswith("/"):
             partial = partial[1:]
 
+        with open(os.path.join(self.confdir, 'yesterpath'), 'w') as fh:
+            fh.write(self.yesterpath)
+
         path = os.path.join(check_dir(
             os.path.join(path, self.today.strftime("%Y-%m-%d")),
-            os.path.join(path, self.yesterday.strftime("%Y-%m-%d"))
-            ),
+            self.yesterpath),
             partial
             )
 
@@ -191,41 +206,58 @@ def cleanup_dirs(root):
 
 
 def check_dir(path, yesterpath=None):
-    checkdir = os.path.isdir(path)
-    if not checkdir:
-        try:
+    if not os.path.exists(path) and not os.path.isdir(path):
+        #try:
             os.makedirs(path, exist_ok=True)
             print("Created directory {}".format(path), flush=True)
-            if yesterpath != None and path != yesterpath:
-                _zipfiles(yesterpath)
+            print("yesterpath: {} todaypath: {}".format(yesterpath, path))
+            if yesterpath != None:
+                if path != yesterpath:
+                    _zipfiles(yesterpath)
+                    #Create .yesterpath in archive with yesterpath inside
+                    wdconfigdir = os.path.join(os.environ['HOME'], '.local', 'workdirfs')
+                    #with open(os.path.join(wdconfigdir, 'yesterpath'), 'w+') as f:
+                    #    f.write(path)
+                    f = open(os.path.join(wdconfigdir, 'yesterpath'), 'w+')
+                    f.write(path)
+                    f.flush()
+                    f.close()
+                    print("update yesterpath")
 
-        except:
-            print("[-] Makedir error")
+        #except Exception as e:
+        #    print("[-] Error while check dir and zip files: ", e)
     return path
 
 def _zipfiles(path):
     print("Zip files in yesterdays archivdir {}".format(path))
-    zip_fileext=".zip"
-    zip_compression=zipfile.ZIP_DEFLATED
+    zip_fileext=".gz"
+    #zip_compression=zipfile.ZIP_DEFLATED
     zip_compressionlevel=5
     files = []
     # r=root, d=directories, f = files
     for r, d, f in os.walk(path):
         for file in f:
-            if '.gz' not in file:
+            if zip_fileext not in file:
                 files.append(os.path.join(r, file))
 
     for f in files:
         print("file to zip: {} -> {}".format(os.path.basename(f), f+'.bzip'))
         try:
-            with ZipFile(
-                    f+zip_fileext,
-                    'w',
-                    allowZip64=True,
-                    compression=zip_compression,
-                    compresslevel=zip_compressionlevel
-                    ) as zf:
-                zf.write(f, os.path.basename(f))
+            with open(f, 'rb') as f_in:
+                with gzip.open(
+                        f+zip_fileext,
+                        'wb',
+                        compresslevel=zip_compressionlevel) as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+
+#            with ZipFile(
+#                    f+zip_fileext,
+#                    'w',
+#                    allowZip64=True,
+#                    compression=zip_compression,
+#                    compresslevel=zip_compressionlevel
+#                    ) as zf:
+#                zf.write(f, os.path.basename(f))
         except Exception as e:
             print("Error during zipping file {}".format(f), e)
         else:
@@ -237,9 +269,18 @@ def _zipfiles(path):
 
 def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
-    check_dir(os.path.join(os.environ['HOME'], args.archive))
     check_dir(os.path.join(os.environ['HOME'], args.mountpoint))
-    cleanup_dirs(os.path.join(os.environ['HOME'], args.archive))
+    if args.archive[:0] == "/":
+        # Archive-Path is absolute path -> use it as is
+        check_dir(args.archive)
+        cleanup_dirs(args.archive)
+        xdg_entry = '"' + args.archive + '"'
+    else:
+        # Archive-path is relative, so use is as relative path from users
+        # homedir
+        check_dir(os.path.join(os.environ['HOME'], args.archive))
+        cleanup_dirs(os.path.join(os.environ['HOME'], args.archive))
+        xdg_entry = '"$HOME/' + args.archive + '"'
     # first search if configuration exists for xdg-userdirs
     # to use it with alias gowork and goarchive
     foundarchive=False
@@ -249,7 +290,7 @@ def main(args):
                 inplace=True) as fh:
             for line in fh:
                 if line.startswith('XDG_ARCHIVE_DIR'):
-                    print("XDG_ARCHIVE_DIR=\"$HOME/"+args.archive+'"', end='\n')
+                    print("XDG_ARCHIVE_DIR=" + xdg_entry, end='\n')
                     foundarchive=True
                 elif line.startswith('XDG_WORK_DIR'):
                     print("XDG_WORK_DIR=\"$HOME/"+args.mountpoint+'"', end='\n')
@@ -260,10 +301,10 @@ def main(args):
         print("File not existing, create it: {}".format(os.environ['HOME']+'/.config/user-dirs.dirs'))
     if not foundarchive:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_ARCHIVE_DIR=\"$HOME/"+args.archive+'"\n')
+            fh.write("XDG_ARCHIVE_DIR=" + xdg_entry + '\n')
     if not foundwork:
         with open(os.environ['HOME']+'/.config/user-dirs.dirs', 'a') as fh:
-            fh.write("XDG_WORK_DIR=\"$HOME/"+args.mountpoint+'"\n')
+            fh.write('XDG_WORK_DIR=\"$HOME/' + args.mountpoint + '"\n')
 
     # start FUSE filesystem
     FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint), nothreads=True, foreground=True)
