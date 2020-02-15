@@ -173,22 +173,23 @@ class WorkdirFS(Operations):
                     print("Directory is empty -> remove it",
                           os.path.join(root, d))
                     os.remove(os.path.join(root, d))
-            for f in files:
-                print("compress", os.path.join(root, f))
-                if zip_fileext not in f:
-                    try:
-                        with open(os.path.join(root, f), 'rb') as f_in:
-                            with gzip.open(
-                                    os.path.join(root, f+zip_fileext),
-                                    'wb',
-                                    compresslevel=zip_compressionlevel) as f_out:
-                                shutil.copyfileobj(f_in, f_out)
+            if self.args.compress:
+                for f in files:
+                    print("compress", os.path.join(root, f))
+                    if zip_fileext not in f:
+                        try:
+                            with open(os.path.join(root, f), 'rb') as f_in:
+                                with gzip.open(
+                                        os.path.join(root, f+zip_fileext),
+                                        'wb',
+                                        compresslevel=zip_compressionlevel) as f_out:
+                                    shutil.copyfileobj(f_in, f_out)
 
-                    except Exception as e:
-                        print("Error during zipping file {}".format(os.path.join(root, f)), e)
-                        traceback.print_exc()
-                    else:
-                        os.remove(os.path.join(root, f))
+                        except Exception as e:
+                            print("Error during zipping file {}".format(os.path.join(root, f)), e)
+                            traceback.print_exc()
+                        else:
+                            os.remove(os.path.join(root, f))
 
 
     # Filesystem methods
@@ -324,16 +325,31 @@ if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--archive",
-            default='archive/workdir', help="Path to archivedir-base")
+            default='archive/workdir', help="""Path to archivedir-base. When path
+            starts with "/", it's an absolute path, else it is handled as path
+            relative to users home.
+            Defaults to »archive/workdir« """)
     parser.add_argument("-m", "--mountpoint",
-            default='Work', help='Path to Workdir')
-    parser.add_argument("-t", "--timeoffset", type=int, default=2, help="""If you're working
+            default='Work', help="""Path to Workdir. This path is always
+            relative to users homedir. "/" at the begin get removed.
+            Defaults to »Work«""")
+    parser.add_argument("-t", "--timeoffset", type=int, default=4, help="""If you're working
             all day till 3 o'clock in the morning, set it to 4, so next day
             archive-dir will be created 4 hours after midnight. You have 1h
-            tolerance, if you're working one day a little bit longer""")
-    parser.add_argument("-Y", "--yearlydir", action="store_true")
-    parser.add_argument("-M", "--monthlydir", action="store_true")
-    parser.add_argument("-W", "--weeklydir", action="store_true")
+            tolerance, if you're working one day a little bit longer.
+            Defaults to »4«""")
+    parser.add_argument("-Y", "--yearlydir", action="store_true",
+            help="""Create a yearly directory - named YYYY - under »archive«.
+    Defaults to »False«""")
+    parser.add_argument("-M", "--monthlydir", action="store_true",
+            help="""Create a monthly directory - named MM - under »archive«.
+    Defaults to »False«""")
+    parser.add_argument("-W", "--weeklydir", action="store_true",
+            help="""Create a weekly directory - named WW - under »archive«.
+    Defaults to »False«""")
+    parser.add_argument("-C", "--compress", action="store_false",
+            help="""Compress each file in archive
+            Defaults to »True«""")
     args = parser.parse_args()
     print(args)
     #root = os.environ['HOME']+'/archive'
