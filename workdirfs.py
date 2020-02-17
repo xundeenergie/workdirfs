@@ -42,7 +42,7 @@ class WorkdirFS(Operations):
             self.xdgarchivpathbase = self.args.archive
         else:
             self.archivpathbase = os.path.join(os.environ['HOME'], self.args.archive)
-            self.xdgarchivpathbase = os.path.join('"$HOME', self.args.archive)
+            self.xdgarchivpathbase = os.path.join('$HOME', self.args.archive)
 
         self._xdg()
         self._give_me_today()
@@ -63,7 +63,7 @@ class WorkdirFS(Operations):
             with fileinput.input(xdguserdirs, inplace=True) as fh:
                 for line in fh:
                     if line.startswith('XDG_ARCHIVE_DIR'):
-                        print("XDG_ARCHIVE_DIR=" + self.xdgarchivpathbase, end='\n')
+                        print('XDG_ARCHIVE_DIR="' + self.xdgarchivpathbase + '"', end='\n')
                         foundarchive=True
                     elif line.startswith('XDG_WORK_DIR'):
                         print('XDG_WORK_DIR="$HOME/' + self.args.mountpoint + '"', end='\n')
@@ -137,12 +137,10 @@ class WorkdirFS(Operations):
 
         if self.today.date() > self.yesterday.date():
             self._cleanup_dirs()
-            print("zip yesterday: ", self.yesterdaypath)
             self.yesterday = self.today
             self.yesterdaypath = self.todaypath
-
-        with open(self.configlast, 'w') as fh:
-            fh.write(self.today.strftime("%Y-%m-%d"))
+            with open(self.configlast, 'w') as fh:
+                fh.write(self.today.strftime("%Y-%m-%d"))
 
         return path
 
