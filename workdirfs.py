@@ -66,7 +66,7 @@ class WorkdirFS(Operations):
                         print("XDG_ARCHIVE_DIR=" + self.xdgarchivpathbase, end='\n')
                         foundarchive=True
                     elif line.startswith('XDG_WORK_DIR'):
-                        print("XDG_WORK_DIR=\"$HOME/" + self.args.mountpoint +'"', end='\n')
+                        print('XDG_WORK_DIR="$HOME/' + self.args.mountpoint + '"', end='\n')
                         foundwork=True
                     else:
                          print(line, end='')
@@ -117,17 +117,6 @@ class WorkdirFS(Operations):
                 print("Created directory {}".format(path), flush=True)
             except Exception as e:
                 print("[-] Error while check dir and zip files: ", e)
-
-#        if yesterdaypath != None and todaypath != None:
-#            print("yesterdaypath: {}, todaypath: {}".format(yesterdaypath, todaypath))
-#            if todaypath != yesterdaypath:
-#                _zipfiles(yesterdaypath)
-#                #Create .yesterdaypath in archive with yesterdaypath inside
-#                wdconfigdir = os.path.join(os.environ['HOME'], '.local', 'workdirfs')
-#                print("New yesterdaypath is {}".format(todaypath))
-#                with open(os.path.join(wdconfigdir, 'yesterdaypath'), 'w+') as f:
-#                    f.write(todaypath)
-
         return path
 
 
@@ -155,8 +144,6 @@ class WorkdirFS(Operations):
         with open(self.configlast, 'w') as fh:
             fh.write(self.today.strftime("%Y-%m-%d"))
 
-#        print("yesterdaypath: {}, todaypath: {}".format(self.yesterdaypath, self.todaypath))
-#        print("yesterday: {}, today: {}".format(self.yesterday.date(), self.today.date()))
         return path
 
 
