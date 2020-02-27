@@ -22,7 +22,7 @@ except:
     try:
         from fusepy import FUSE, FuseOSError, Operations
     except:
-        print("please install fusepy for python3")
+        print("please install fusepy")
         raise errno.ModuleNotFoundError
 
 
@@ -150,13 +150,15 @@ class WorkdirFS(Operations):
         print("Cleanup dir", self.yesterdaypath)
         zip_fileext=".gz"
         zip_compressionlevel=5
-        for root, dirs, files in os.walk(self.yesterdaypath, topdown=False):
+        #for root, dirs, files in os.walk(self.yesterdaypath, topdown=False):
+        print("Archivepath",self.archivpathbase)
+        for root, dirs, files in os.walk(self.archivpathbase, topdown=False):
             for d in dirs:
                 print("cleanup",os.path.join(root, d))
-                if not _dir == self.todaypath and not os.listdir(os.path.join(root, d)):
+                if not d == self.todaypath and not os.listdir(os.path.join(root, d)):
                     print("Directory is empty -> remove it",
                           os.path.join(root, d))
-                    os.remove(os.path.join(root, d))
+                    os.rmdir(os.path.join(root, d))
             if self.args.compress:
                 for f in files:
                     print("compress", os.path.join(root, f))
@@ -304,8 +306,8 @@ def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
     # start FUSE filesystem
     mountpoint = os.path.join(os.environ['HOME'], args.mountpoint)
-    if not (os.path.isdir(mountpoint) || os.path.exists(mountpoint)):
-        os.mkdir(mountpoint, "0744")
+    if not (os.path.isdir(mountpoint) or os.path.exists(mountpoint)):
+        os.mkdir(mountpoint, 0o744)
     FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint), nothreads=True, foreground=True)
 
 if __name__ == '__main__':
