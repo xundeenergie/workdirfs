@@ -58,7 +58,10 @@ class WorkdirFS(Operations):
     def _xdg(self):
         foundarchive=False
         foundwork=False
-        xdguserdirs = os.environ['HOME']+'/.config/user-dirs.dirs'
+        xdgdir = os.environ['HOME']+'/.config'
+        xdguserdirs = os.path.join(xdgdir, '/user-dirs.dirs')
+        if not os.path.exists(xdgdir):
+            os.mkdir(xdgdir)
         try:
             with fileinput.input(xdguserdirs, inplace=True) as fh:
                 for line in fh:
