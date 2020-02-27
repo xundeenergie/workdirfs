@@ -22,7 +22,7 @@ except:
     try:
         from fusepy import FUSE, FuseOSError, Operations
     except:
-        print("please install fusepy")
+        print("please install fusepy for python3")
         raise errno.ModuleNotFoundError
 
 
@@ -303,6 +303,9 @@ class WorkdirFS(Operations):
 def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
     # start FUSE filesystem
+    mountpoint = os.path.join(os.environ['HOME'], args.mountpoint)
+    if not (os.path.isdir(mountpoint) || os.path.exists(mountpoint)):
+        os.mkdir(mountpoint, "0744")
     FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint), nothreads=True, foreground=True)
 
 if __name__ == '__main__':
