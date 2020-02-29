@@ -21,9 +21,9 @@ try:
 except:
     try:
         from fusepy import FUSE, FuseOSError, Operations
-    except:
-        print("please install fusepy")
-        raise errno.ModuleNotFoundError
+    except ModuleNotFoundError as e:
+        print("please install fusepy", e)
+        raise
 
 
 class WorkdirFS(Operations):
