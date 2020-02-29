@@ -60,8 +60,6 @@ class WorkdirFS(Operations):
         foundwork=False
         xdgdir = os.path.join(os.environ['HOME'], '.config')
         xdguserdirs = os.path.join(xdgdir, 'user-dirs.dirs')
-        print(xdgdir)
-        print(xdguserdirs)
         if not os.path.exists(xdgdir):
             os.mkdir(xdgdir)
         try:
