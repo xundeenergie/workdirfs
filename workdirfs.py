@@ -311,7 +311,8 @@ def main(args):
     mountpoint = os.path.join(os.environ['HOME'], args.mountpoint)
     if not (os.path.isdir(mountpoint) or os.path.exists(mountpoint)):
         os.mkdir(mountpoint, 0o744)
-    FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint), nothreads=True, foreground=True)
+    FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint),
+            nothreads=True, foreground=True, allow_other=True, allow_root=True)
 
 if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
