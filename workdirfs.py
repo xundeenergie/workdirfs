@@ -299,12 +299,6 @@ class WorkdirFS(Operations):
     def fsync(self, path, fdatasync, fh):
         return self.flush(path, fh)
 
-
-
-
-
-
-
 def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
     # start FUSE filesystem
