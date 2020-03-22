@@ -305,7 +305,7 @@ def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
     # start FUSE filesystem
     mountpoint = Path(os.path.join(os.environ['HOME'], args.mountpoint))
-    if mountpoint.is_link():
+    if mountpoint.is_symlink():
         mountpoint.unlink();
     if mountpoint.exist():
         mountpoint.rename(mountpoint + datetime.now().strftime("%Y-%m-%d") 
