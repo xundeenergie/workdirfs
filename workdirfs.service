@@ -4,5 +4,4 @@ Description=Daily working directory ~/Work
 [Service]
 Environment=MOUNTPOINT=Work
 ExecStart=/usr/bin/python3 -u /usr/local/bin/workdirfs.py -m $MOUNTPOINT
-ExecStop=-/usr/bin/fusermount -u ${MOUNTPOINT}
-ExecStop=-/bin/fusermount -u ${MOUNTPOINT}
+ExecStop=%FUSERMOUNT% -u ${MOUNTPOINT}
