@@ -16,6 +16,9 @@ import shutil
 import json
 import traceback
 
+import random
+import string
+
 from pathlib import Path
 
 try:
@@ -308,11 +311,22 @@ def main(args):
     if mountpoint.is_symlink():
         mountpoint.unlink();
     if mountpoint.exists():
-        mountpoint.rename(mountpoint + datetime.now().strftime("%Y-%m-%d") 
-                + ''.join(random.choice(
-                        string.ascii_uppercase + string.digits) for _ in range(6))
-                + ".bak")
-    mountpoint.mkdir()
+        if mountpoint.is_dir():
+            if os.listdir(mountpoint):
+                mountpoint.rename(str(mountpoint) + "-" + datetime.now().strftime("%Y-%m-%d") 
+                        + "-"
+                        + ''.join(random.choice(
+                                string.ascii_uppercase + string.digits) for _ in range(6))
+                        + ".bak")
+        else:
+            mountpoint.rename(str(mountpoint) + "-" + datetime.now().strftime("%Y-%m-%d") 
+                    + "-"
+                    + ''.join(random.choice(
+                            string.ascii_uppercase + string.digits) for _ in range(6))
+                    + ".bak")
+
+    mountpoint.mkdir(mode=0o700, parents=True, exist_ok=True)
+
 #    if not (os.path.isdir(mountpoint) or os.path.exists(mountpoint)):
 #        if  Path(mountpoint).is_symlink():
 #            os.path.remove
