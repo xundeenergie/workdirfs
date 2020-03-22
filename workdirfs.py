@@ -307,7 +307,7 @@ def main(args):
     mountpoint = Path(os.path.join(os.environ['HOME'], args.mountpoint))
     if mountpoint.is_symlink():
         mountpoint.unlink();
-    if mountpoint.exist():
+    if mountpoint.exists():
         mountpoint.rename(mountpoint + datetime.now().strftime("%Y-%m-%d") 
                 + ''.join(random.choice(
                         string.ascii_uppercase + string.digits) for _ in range(6))
