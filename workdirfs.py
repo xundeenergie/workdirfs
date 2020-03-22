@@ -16,6 +16,8 @@ import shutil
 import json
 import traceback
 
+from pathlib import Path
+
 try:
     from fuse import FUSE, FuseOSError, Operations
 except:
@@ -302,11 +304,21 @@ class WorkdirFS(Operations):
 def main(args):
     #FUSE(WorkdirFS(root), mountpoint, nothreads=True, foreground=True)
     # start FUSE filesystem
-    mountpoint = os.path.join(os.environ['HOME'], args.mountpoint)
-    if not (os.path.isdir(mountpoint) or os.path.exists(mountpoint)):
-        os.mkdir(mountpoint, 0o744)
+    mountpoint = Path(os.path.join(os.environ['HOME'], args.mountpoint))
+    if mountpoint.is_link():
+        mountpoint.unlink();
+    if mountpoint.exist():
+        mountpoint.rename(mountpoint + datetime.now().strftime("%Y-%m-%d") 
+                + ''.join(random.choice(
+                        string.ascii_uppercase + string.digits) for _ in range(6))
+                + ".bak")
+    mountpoint.mkdir()
+#    if not (os.path.isdir(mountpoint) or os.path.exists(mountpoint)):
+#        if  Path(mountpoint).is_symlink():
+#            os.path.remove
+#        os.mkdir(mountpoint, 0o744)
     FUSE(WorkdirFS(args), os.path.join(os.environ['HOME'], args.mountpoint),
-            nothreads=True, foreground=True, allow_other=True, allow_root=True)
+            nothreads=True, foreground=True, allow_root=True)
 
 if __name__ == '__main__':
     #main(sys.argv[2], sys.argv[1])
