@@ -310,7 +310,7 @@ def main(args):
     mountpoint = Path(os.path.join(os.environ['HOME'], args.mountpoint))
     if mountpoint.is_symlink():
         mountpoint.unlink();
-    if mountpoint.exists():
+    if mountpoint.exists() and not mountpoint.is_mount():
         if mountpoint.is_dir():
             if os.listdir(mountpoint):
                 mountpoint.rename(str(mountpoint) + "-" + datetime.now().strftime("%Y-%m-%d") 
