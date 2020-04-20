@@ -156,7 +156,7 @@ class WorkdirFS(Operations):
         if type(zipext) is str:
             return zipext in filename
         elif type(zipext) is list:
-            for e in arr:
+            for e in zipext:
                 if (lambda x: x in filename)(e):
                     return True
         return False
@@ -165,7 +165,8 @@ class WorkdirFS(Operations):
 
         print("Cleanup dir", self.yesterdaypath)
         #zip_fileext=".gz"
-        zip_fileext=[".gz","tgz",".gz.tar"]
+        zip_fileexts=[".gz","tgz",".gz.tar"]
+        zip_fileext=".gz"
         zip_compressionlevel=5
         #for root, dirs, files in os.walk(self.yesterdaypath, topdown=False):
         print("Archivepath",self.archivpathbase)
@@ -180,7 +181,7 @@ class WorkdirFS(Operations):
                 for f in files:
                     print("compress", os.path.join(root, f))
                     #if zip_fileext not in f:
-                    if not _check_fileext(f,zip_fileext):
+                    if not self._check_fileext(f,zip_fileexts):
                         try:
                             with open(os.path.join(root, f), 'rb') as f_in:
                                 with gzip.open(
