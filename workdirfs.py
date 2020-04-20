@@ -164,9 +164,11 @@ class WorkdirFS(Operations):
     def _cleanup_dirs(self):
 
         print("Cleanup dir", self.yesterdaypath)
-        #zip_fileext=".gz"
-        zip_fileexts=[".gz","tgz",".gz.tar"]
+        # zip_fileext is used for output
         zip_fileext=".gz"
+        # zip_fileexts is a single string or a list of strings, which files
+        # should not be ceompressed
+        zip_fileexts=[".gz","tgz",".gz.tar"]
         zip_compressionlevel=5
         #for root, dirs, files in os.walk(self.yesterdaypath, topdown=False):
         print("Archivepath",self.archivpathbase)
