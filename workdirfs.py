@@ -95,14 +95,18 @@ class WorkdirFS(Operations):
     def _give_me_yesterday(self):
         if os.path.exists(self.configlast):
             with open(self.configlast, 'r') as fh:
-                self.yesterday = datetime.strptime(fh.readline().strip(), "%Y-%m-%d")
+                yesterday = fh.readline().strip()
+            if self.yesterday == None:
+                self.yesterday = self.today
+            else:
+                self.yesterday = datetime.strptime(yesterday, "%Y-%m-%d")
         else:
             self.yesterday = self.today
             self._checkdir(self.confdir)
             if not os.path.isdir(self.confdir):
                 os.mkdir(self.confdir)
-            with open(self.configlast, 'w') as fh:
-                fh.write(self.yesterday.date().strftime("%Y-%m-%d"))
+        with open(self.configlast, 'w') as fh:
+            fh.write(self.yesterday.date().strftime("%Y-%m-%d"))
         return self.yesterday
 
     def _give_me_archivpath(self, _date=None):
