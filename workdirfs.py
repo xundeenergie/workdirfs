@@ -97,7 +97,7 @@ class WorkdirFS(Operations):
             with open(self.configlast, 'r') as fh:
                 yesterday = fh.readline().strip()
             print("yesterday: "+yesterday, end='\n')
-            if yesterday == None or yesterday == "":
+            if len(yesterday) == 0:
                 self.yesterday = self.today
             else:
                 self.yesterday = datetime.strptime(yesterday, "%Y-%m-%d")
