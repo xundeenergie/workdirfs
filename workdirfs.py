@@ -96,7 +96,6 @@ class WorkdirFS(Operations):
         if os.path.exists(self.configlast):
             with open(self.configlast, 'r') as fh:
                 yesterday = fh.readline().strip()
-            print("yesterday: "+yesterday, end='\n')
             if len(yesterday) == 0:
                 self.yesterday = self.today
             else:
